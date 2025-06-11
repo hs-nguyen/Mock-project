@@ -1,0 +1,158 @@
+---
+# Update package
+- name: Update package
+  ansible.builtin.shell:
+    sudo apt-get update -y
+  become: true
+  args:
+    executable: /bin/bash
+# Install nginx service for ubuntu
+- name: simple install webserver
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: true
+  become: true
+
+# Ensure nginx start and enable
+- name: Ensure nginx start and enable
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: true
+  become: true   
+
+- name: install curl
+  ansible.builtin.apt:
+    name: curl
+    state: present
+    update_cache: true
+  become: true
+
+- name: download script install nvm
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh
+    dest: /home/ubuntu/install_nvm.sh
+    mode: "0755"
+    force: true
+  become: true
+  tags: nvm-software
+
+- name: Install nodejs and nvm environment
+  ansible.builtin.shell: |
+    bash /home/ubuntu/install_nvm.sh
+    export NVM_DIR="/$HOME/.nvm"
+    source "$NVM_DIR/nvm.sh"
+    nvm install 16
+    nvm use 16
+    npm install -g pm2
+  args:
+    executable: /bin/bash
+  become: false
+  remote_user: ubuntu
+  tags: install-nodejs
+- name: Create directory app-tier
+  ansible.builtin.file:
+    path: /home/ubuntu/app-tier
+    state: directory
+    mode: "0755"
+    owner: ubuntu
+    group: ubuntu
+  become: true
+- name: Copy app-tier folder to home/ubuntu/app-tier
+  ansible.builtin.copy:
+    src: /home/ubuntu/final-project/application/app-tier/
+    dest: /home/ubuntu/app-tier
+    mode: "0755"
+  become: true
+- name: Install dependencies for backend
+  ansible.builtin.shell: |
+    export NVM_DIR="/$HOME/.nvm"
+    source "$NVM_DIR/nvm.sh"
+    cd /home/ubuntu/app-tier/
+    npm install
+    pm2 start /home/ubuntu/app-tier/index.js
+    pm2 startup
+    pm2 save
+  become: false
+  args:
+    executable: /bin/bash
+  tags: node_modules
+- name: Create directory web-tier
+  ansible.builtin.file:
+    path: /home/ubuntu/web-tier
+    state: directory
+    mode: "0755"
+    owner: ubuntu
+    group: ubuntu
+  become: true
+- name: Copy web-tier folder to home/ubuntu/web-tier
+  ansible.builtin.copy:
+    src: /home/ubuntu/final-project/application/web-tier/
+    dest: /home/ubuntu/web-tier
+    mode: "0755"
+  become: true
+- name: Install dependencies for frontend
+  ansible.builtin.shell: |
+    export NVM_DIR="/$HOME/.nvm"
+    source "$NVM_DIR/nvm.sh"
+    cd /home/ubuntu/web-tier
+    npm install
+    npm run build
+  become: false
+  args:
+    executable: /bin/bash
+- name: deploy html page
+  ansible.builtin.copy:
+    src: /home/ubuntu/final-project/application/nginx.conf
+    dest: /etc/nginx/nginx.conf
+    mode: "0644"
+    force: true
+  become: true
+  notify: restart nginx
+
+- name: Download node_exporter
+  ansible.builtin.get_url:
+    url: https://github.com/prometheus/node_exporter/releases/download/v1.9.1/node_exporter-1.9.1.linux-amd64.tar.gz
+    dest: /tmp/node_exporter.tar.gz
+    mode: "0755"
+
+- name: Extract node_exporter
+  ansible.builtin.unarchive:
+    src: /tmp/node_exporter.tar.gz
+    dest: /usr/local/bin/
+    remote_src: true
+    mode: "0755"
+  become: true
+  tags: node_exporter
+- name: Create systemd service
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/node_exporter.service
+    content: |
+      [Unit]
+      Description=Node Exporter
+      After=network.target
+
+      [Service]
+      ExecStart=/usr/local/bin/node_exporter-1.7.0.linux-amd64/node_exporter
+
+      [Install]
+      WantedBy=default.target
+    mode: "0755"
+  become: true
+  tags: systemd
+- name: Reload node_exporter service
+  ansible.builtin.shell: |
+    systemctl daemon-reload
+    systemctl restart node_exporter.service
+  args:
+    executable: /bin/bash
+  become: true
+  tags: reload-node-exporter
+- name: Enable and start node_exporter
+  ansible.builtin.systemd:
+    name: node_exporter
+    enabled: true
+    state: started
+  tags: Start_node_exporter
+  become: true

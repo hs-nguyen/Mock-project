@@ -1,0 +1,27 @@
+﻿---
+- name: Install Prometheus
+  ansible.builtin.get_url:
+    url: https://github.com/prometheus/prometheus/releases/download/v3.4.1/prometheus-3.4.1.linux-amd64.tar.gz
+    dest: /tmp/prometheus-3.4.1.linux-amd64.tar.gz
+    mode: "0755"
+  become: true
+- name: Unarchive prometheus-3.4.1.linux-amd64.tar.gz
+  ansible.builtin.unarchive:
+    src: /tmp/prometheus-3.4.1.linux-amd64.tar.gz
+    dest: /opt/
+    remote_src: true
+    mode: "0755"
+  become: true
+    
+
+- name: Configure Prometheus targets
+  ansible.builtin.template:
+    src: /home/ubuntu/Mock-project/softwares-deployment/roles/prometheus/templates/prometheus.yml.j2
+    dest: /opt/prometheus/prometheus.yml
+    mode: "0755"
+
+- name: Ensure Prometheus is running
+  ansible.builtin.service:
+    name: prometheus
+    state: started
+    enabled: true

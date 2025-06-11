@@ -1,0 +1,27 @@
+---
+# - name: Deploy haproxy for server
+#   hosts:
+#    - proxy
+#   become: false
+#   roles:
+#    - proxy-sv
+
+# - name: Deploy web application on server
+#   hosts:
+#    - web
+#   become: false
+#   roles:
+#    - webserver
+- name: Deploy prometheus and grafana on server
+  hosts:
+   - proxy
+  become: false
+  roles:
+  #  - prometheus
+   - grafana
+#  - name: Deployment MySQL server
+#    hosts:
+#      - db-server-master
+#    roles:
+#      - mysql
+ 

@@ -1,0 +1,7 @@
+---
+skip_list:
+    - yaml[new-line-at-end-of-file]
+    - yaml[trailing-spaces]
+    - name[casing]
+    - avoid-implicit
+    - yaml[no-changed-when]

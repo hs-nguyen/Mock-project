@@ -1,0 +1,48 @@
+﻿- name: Import the GPG Key
+  ansible.builtin.rpm_key:
+    key: https://rpm.grafana.com/gpg.key
+    validate_certs: false
+    state: present
+  become: true
+
+- name: Add repository 
+  ansible.builtin.yum_repository:
+    name: grafana
+    baseurl: https://rpm.grafana.com
+    description: Grafana yum repository
+    gpgcheck: true
+    enabled: true
+    gpgkey: https://rpm.grafana.com/gpg.key
+    validate_certs: false
+  become: true
+- name: Install Grafana
+  ansible.builtin.dnf:
+    name: grafana
+    state: present
+    update_cache: true
+  become: true
+
+- name: Ensure and start grafana
+  ansible.builtin.service:
+    name: grafana-server
+    state: started
+    enabled: true
+  become: true
+# - name: Add Prometheus datasource
+#   grafana.grafana.datasource:
+#     dataSource:
+#       {
+#         "name": "Prometheus",
+#         "type": "prometheus",
+#         "access": "proxy",
+#         "url": "http://172.31.20.182:9090",
+#         "jsonData": {
+#           "httpMethod": "POST",
+#           "manageAlerts": true,
+#           "prometheusType": "Prometheus",
+#           "cacheLevel": "High"
+#         }
+#       }
+#     grafana_url: http://54.169.68.117:3000
+#     grafana_api_key: glsa_nvjdkUzvInTG3YUDkY4VN1yHd4ts68C3_9339cec6
+#     state: present

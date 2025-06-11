@@ -1,0 +1,78 @@
+---
+# Install Proxy
+- name: Install haproxy
+  ansible.builtin.package:
+    name: haproxy
+    state: present
+  become: true
+- name: config template
+  ansible.builtin.template:
+    dest: /etc/haproxy/global.cfg
+    src: 'global.cfg.j2'
+    mode: "0644"
+  become: true
+  notify: restart haproxy
+- name: Ensure default config path file exists
+  ansible.builtin.file:
+    path: /etc/default/haproxy
+    state: touch
+    mode: '0644'
+  become: true
+  notify: restart haproxy
+- name: copy config file from local to haproxy-server
+  ansible.builtin.copy:
+    src: /home/ubuntu/final-project/roles/proxy-sv/files/haproxy.cfg
+    dest: /etc/haproxy
+    mode: "644"
+    force: true
+  become: true
+- name: echo "" >> /etc/haproxy/haproxy.cfg
+  ansible.builtin.shell: echo "" >> /etc/haproxy/haproxy.cfg
+  become: true
+
+- name: Download node_exporter
+  ansible.builtin.get_url:
+    url: https://github.com/prometheus/node_exporter/releases/download/v1.9.1/node_exporter-1.9.1.linux-amd64.tar.gz
+    dest: /tmp/node_exporter.tar.gz
+    mode: "0755"
+
+- name: Extract node_exporter
+  ansible.builtin.unarchive:
+    src: /tmp/node_exporter.tar.gz
+    dest: /usr/local/bin/
+    remote_src: true
+    mode: "0755"
+  become: true
+  tags: node_exporter
+
+- name: Create systemd service
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/node_exporter.service
+    content: |
+      [Unit]
+      Description=Node Exporter
+      After=network.target
+
+      [Service]
+      ExecStart=/usr/local/bin/node_exporter-1.7.0.linux-amd64/node_exporter
+
+      [Install]
+      WantedBy=default.target
+    mode: "0755"
+  become: true
+  tags: systemd
+- name: Reload node_exporter service
+  ansible.builtin.shell: |
+    systemctl daemon-reload
+    systemctl restart node_exporter.service
+  args:
+    executable: /bin/bash
+  become: true
+  tags: reload-node-exporter
+- name: Enable and start node_exporter
+  ansible.builtin.systemd:
+    name: node_exporter
+    enabled: true
+    state: started
+  tags: Start_node_exporter
+  become: true
