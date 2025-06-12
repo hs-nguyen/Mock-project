@@ -61,7 +61,7 @@
   become: true
 - name: Copy app-tier folder to home/ubuntu/app-tier
   ansible.builtin.copy:
-    src: /home/ubuntu/final-project/application/app-tier/
+    src: /home/ubuntu/Mock-project/application/app-tier/
     dest: /home/ubuntu/app-tier
     mode: "0755"
   become: true
@@ -88,7 +88,7 @@
   become: true
 - name: Copy web-tier folder to home/ubuntu/web-tier
   ansible.builtin.copy:
-    src: /home/ubuntu/final-project/application/web-tier/
+    src: /home/ubuntu/Mock-project/application/web-tier/
     dest: /home/ubuntu/web-tier
     mode: "0755"
   become: true
@@ -104,7 +104,7 @@
     executable: /bin/bash
 - name: deploy html page
   ansible.builtin.copy:
-    src: /home/ubuntu/final-project/application/nginx.conf
+    src: /home/ubuntu/Mock-project/application/nginx.conf
     dest: /etc/nginx/nginx.conf
     mode: "0644"
     force: true

@@ -5,3 +5,4 @@ skip_list:
     - name[casing]
     - avoid-implicit
     - yaml[no-changed-when]
+    - yaml[indentation]

@@ -17,8 +17,20 @@
 - name: Configure Prometheus targets
   ansible.builtin.template:
     src: /home/ubuntu/Mock-project/softwares-deployment/roles/prometheus/templates/prometheus.yml.j2
-    dest: /opt/prometheus/prometheus.yml
+    dest: /opt/prometheus-3.4.1.linux-amd64/prometheus.yml
     mode: "0755"
+  become: true
+
+- name: Copy Prometheus systemd service file
+  ansible.builtin.copy:
+    src: prometheus.service
+    dest: /etc/systemd/system/prometheus.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Reload systemd
+  become: true
 
 - name: Ensure Prometheus is running
   ansible.builtin.service:

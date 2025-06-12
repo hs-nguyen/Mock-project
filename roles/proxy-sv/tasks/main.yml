@@ -21,7 +21,7 @@
   notify: restart haproxy
 - name: copy config file from local to haproxy-server
   ansible.builtin.copy:
-    src: /home/ubuntu/final-project/roles/proxy-sv/files/haproxy.cfg
+    src: /home/ubuntu/Mock-project/roles/proxy-sv/files/haproxy.cfg
     dest: /etc/haproxy
     mode: "644"
     force: true
